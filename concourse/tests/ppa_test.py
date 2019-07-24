@@ -91,6 +91,10 @@ class TestSourcePackageBuilder(TestCase):
     def test_install_location(self):
         self.assertEqual(self.source_package_builder.install_location(), '/opt/name-short-version')
 
+    def test_install_location_with_prefix(self):
+        self.source_package_builder.prefix = '/usr/local'
+        self.assertEqual(self.source_package_builder.install_location(), '/usr/local/name-short-version')
+
     def test_install_contains_correct_path(self):
         install = self.source_package_builder._install()
         self.assertEqual(install, 'bin_gpdb/* /opt/name-short-version\n')
@@ -154,10 +158,24 @@ class TestSourcePackageBuilder(TestCase):
             greenplum_path_contents = greenplum_path_file.readlines()
             self.assertEqual(greenplum_path_contents, expected)
 
+    @patch('shutil.copyfile')
+    @patch('oss.ppa.SourcePackageBuilder.source_dir', new_callable=PropertyMock)
+    def test_include_open_soure_license(self, mock_source_dir, _1):
+        mock_source_dir.return_value = self.temp_dir
+        os.mkdir(os.path.join(self.temp_dir, 'bin_gpdb'))
+        license_file_path = os.path.join(self.temp_dir, 'osl_file.txt')
+        Path(license_file_path).touch()
+
+        self.assertFalse(os.path.exists(os.path.join(self.temp_dir, 'bin_gpdb', 'osl_file.txt')))
+        self.source_package_builder.include_open_source_license(license_file_path)
+        self.assertFalse(os.path.exists(os.path.join(self.temp_dir, 'bin_gpdb', 'osl_file.txt')))
+
+
     @patch('oss.ppa.SourcePackageBuilder.replace_greenplum_path')
+    @patch('oss.ppa.SourcePackageBuilder.include_open_source_license')
     @patch('oss.ppa.tarfile')
     @patch('oss.ppa.SourcePackageBuilder.source_dir', new_callable=PropertyMock)
-    def test_create_source_it_creates_the_source_directory_when_it_does_not_exist(self, mock_source_dir, _1, _2):
+    def test_create_source_it_creates_the_source_directory_when_it_does_not_exist(self, mock_source_dir, _1, _2, _3):
         source_dir = os.path.join(self.temp_dir, 'my_src')
         mock_source_dir.return_value = source_dir
         self.assertFalse(os.path.exists(source_dir))
@@ -165,9 +183,10 @@ class TestSourcePackageBuilder(TestCase):
         self.assertTrue(os.path.exists(source_dir))
 
     @patch('oss.ppa.SourcePackageBuilder.replace_greenplum_path')
+    @patch('oss.ppa.SourcePackageBuilder.include_open_source_license')
     @patch('oss.ppa.tarfile')
     @patch('oss.ppa.SourcePackageBuilder.source_dir', new_callable=PropertyMock)
-    def test_create_source_it_removes_the_source_directory_when_it_already_exists(self, mock_source_dir, _1, _2):
+    def test_create_source_it_removes_the_source_directory_when_it_already_exists(self, mock_source_dir, _1, _2, _3):
         mock_source_dir.return_value = self.temp_dir
         file_path = os.path.join(self.temp_dir, 'a.txt')
         Path(file_path).touch()
@@ -177,9 +196,11 @@ class TestSourcePackageBuilder(TestCase):
         self.assertTrue(os.path.exists(self.temp_dir))
 
     @patch('oss.ppa.SourcePackageBuilder.replace_greenplum_path')
+    @patch('oss.ppa.SourcePackageBuilder.include_open_source_license')
     @patch('oss.ppa.SourcePackageBuilder.source_dir', new_callable=PropertyMock)
     def test_create_source_extracts_bin_and_archives_it_to_basename_of_source_dir(self, mock_source_dir,
-                                                                                  mock_replace_greenplum_path):
+                                                                                  mock_replace_greenplum_path,
+                                                                                  mock_include_open_source_license):
         os.chdir(self.temp_dir)
         source_dir = os.path.join(self.temp_dir, 'my_src')
         os.mkdir(source_dir)
@@ -203,6 +224,7 @@ class TestSourcePackageBuilder(TestCase):
             repackaged_contents_set.update(map(lambda tar_info: tar_info.name, tar.getmembers()))
         self.assertEqual(len(repackaged_contents_set.intersection(expected_contents_set)), 3)
         mock_replace_greenplum_path.assert_called()
+        mock_include_open_source_license.assert_called()
 
 
 class TestUtil(TestCase):

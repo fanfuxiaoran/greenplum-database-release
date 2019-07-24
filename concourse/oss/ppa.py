@@ -58,12 +58,13 @@ class SourcePackage:
 
 
 class SourcePackageBuilder:
-    def __init__(self, bin_gpdb_path='', package_name='', release_message=''):
+    def __init__(self, bin_gpdb_path='', package_name='', release_message='', prefix='/opt'):
         self.bin_gpdb_path = bin_gpdb_path
         self.package_name = package_name
         self.release_message = release_message
         self._gpdb_version_short = None
         self.debian_revision = 1
+        self.prefix = prefix
 
     def build(self):
         self.create_source()
@@ -95,6 +96,7 @@ class SourcePackageBuilder:
             tar.extractall(dest)
 
         self.replace_greenplum_path()
+        self.include_open_source_license()
 
         # using _ here is debian convention
         archive_name = f'{self.package_name}_{self.gpdb_version_short}.orig.tar.gz'
@@ -109,6 +111,10 @@ class SourcePackageBuilder:
                     print(f'GPHOME={self.install_location()}')
                 else:
                     print(line, end='')
+
+    def include_open_source_license(self, license_file):
+        filename = os.path.basename(license_file)
+        shutil.copyfile(license_file, os.path.join(self.source_dir, 'bin_gpdb', filename))
 
     def create_debian_dir(self):
         debian_dir = os.path.join(self.source_dir, 'debian')
@@ -148,7 +154,7 @@ class SourcePackageBuilder:
         return f'bin_gpdb/* {self.install_location()}\n'
 
     def install_location(self):
-        return f'/opt/{self.package_name}-{self.gpdb_version_short}'
+        return os.path.join(self.prefix, f'{self.package_name}-{self.gpdb_version_short}')
 
     def _copyright(self):
         return Util.strip_margin(
