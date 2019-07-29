@@ -26,6 +26,7 @@ inputs:
 
 outputs:
   - name: gpdb_rpm_installer
+  - name: gpdb_srpm_installer
 
 run:
   path: greenplum-database-release/concourse/scripts/build_gpdb_rpm.bash

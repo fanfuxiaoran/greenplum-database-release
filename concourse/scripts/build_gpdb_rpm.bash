@@ -109,10 +109,12 @@ function create_rpmbuild_flags() {
 
 function _main() {
   local __built_rpm
+  local __built_srpm
   local __rpm_build_dir
   local __gpdb_version
   local __rpm_gpdb_version
   local __final_rpm_name
+  local __final_srpm_name
   local __rpm_build_flags
 
   if [[ -d gpdb_src ]]; then
@@ -136,6 +138,10 @@ function _main() {
   __final_rpm_name="${GPDB_NAME}-${__gpdb_version}-${PLATFORM}-x86_64.rpm"
   echo "[INFO] Final RPM name: ${__final_rpm_name}"
 
+  # Build the expected srpm name based on the gpdb version of the artifacts
+  __final_srpm_name="${GPDB_NAME}-${__gpdb_version}-1.${PLATFORM:2}.src.rpm"
+  echo "[INFO] Final SRPM name: ${__final_srpm_name}"
+
   # Conventional location to build RPMs is platform specific
   __rpm_build_dir=$(determine_rpm_build_dir "${PLATFORM}")
   echo "[INFO] RPM build dir: ${__rpm_build_dir}"
@@ -154,10 +160,13 @@ function _main() {
   # Build the RPM
   # TODO: Is the eval actually necessary?
   eval "rpmbuild -bb ${__rpm_build_dir}/SPECS/greenplum-db.spec ${__rpm_build_flags}" || exit 1
+  eval "rpmbuild -ba ${__rpm_build_dir}/SPECS/greenplum-db.spec ${__rpm_build_flags}" || exit 1
 
   # Export the built RPM and include a sha256 hash
   __built_rpm="gpdb_rpm_installer/${__final_rpm_name}"
+  __built_srpm="gpdb_srpm_installer/${__final_srpm_name}"
   cp "${__rpm_build_dir}"/RPMS/x86_64/greenplum-*.rpm "${__built_rpm}"
+  cp "${__rpm_build_dir}"/SRPMS/greenplum-*.src.rpm "${__built_srpm}"
   openssl dgst -sha256 "${__built_rpm}" > "${__built_rpm}".sha256 || exit 1
   echo "[INFO] Final RPM installer: ${__built_rpm}"
   echo "[INFO] Final RPM installer sha: $(cat "${__built_rpm}".sha256)" || exit 1
