@@ -40,9 +40,9 @@ Complete!
 Passed check! Install /tmp/build/gpdb_rpm_installer/greenplum-db-<gpdb_version>-rhel7-x86_64.rpm package successfully.
 ```
 
-## How to use the application to create a DEB package locally
+## How to use the application to create a GPDB6 DEB package locally
 ```bash
-BIN_GPDB_TARGZ=/path/to/bin_gpdb.tar.gz make local-build-deb
+BIN_GPDB_TARGZ=/path/to/bin_gpdb.tar.gz make local-build-gpdb6-deb
 ```
 The output like:
 ```
@@ -52,4 +52,17 @@ Cloning into '/tmp/create-package/greenplum-database-release'...
 ...
 done.
 Passed check! Install /tmp/build/gpdb_deb_installer/greenplum-db-<gpdb_version>-ubuntu18.04-amd64.deb package successfully.
+```
+
+## How to use the open source code to create a GPDB5 DEB package locally
+```bash
+make local-build-gpdb5-deb
+```
+The output like:
+```
+Creating DEB Package...
+...
+...
+done.
+Passed check! Install /tmp/build/gpdb5_deb_installer/greenplum-db-<gpdb_version>.build.dev_amd64.deb package successfully.
 ```

@@ -131,8 +131,11 @@ shellcheck:
 yamllint:
 	docker run --rm -v ${PWD}:/code cytopia/yamllint /code -c /code/.yamllint
 
-local-build-deb:
-	bin/create_deb_package.bash
+local-build-gpdb6-deb:
+	bin/create_gpdb6_deb_package.bash
 
 local-build-rpm:
 	bin/create_rpm_package.bash
+
+local-build-gpdb5-deb:
+	bin/create_gpdb5_deb_package.bash
